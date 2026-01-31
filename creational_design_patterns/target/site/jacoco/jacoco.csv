@@ -1,9 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-creational_design_patterns,org.example.creational.builder,Car,0,244,0,14,0,44,0,21,0,14
-creational_design_patterns,org.example.creational.builder,Car.Builder,0,131,0,4,0,47,0,17,0,15
-creational_design_patterns,org.example.creational.factory,WordDocument,0,34,1,3,0,12,1,7,0,6
-creational_design_patterns,org.example.creational.factory,DocumentFactory,3,37,0,8,1,7,1,6,1,1
-creational_design_patterns,org.example.creational.factory,HtmlDocument,0,34,1,3,0,12,1,7,0,6
-creational_design_patterns,org.example.creational.factory,PdfDocument,0,34,1,3,0,12,1,7,0,6
-creational_design_patterns,org.example.creational,CarConfiguration,3,88,0,0,1,42,1,1,1,1
-creational_design_patterns,org.example.creational,DocumentEditor,0,92,0,6,0,34,0,10,0,7
