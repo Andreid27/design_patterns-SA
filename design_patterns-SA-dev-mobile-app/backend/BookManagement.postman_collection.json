@@ -1,0 +1,755 @@
+{
+  "info": {
+    "_postman_id": "structural-patterns-001",
+    "name": "Structural Design Patterns - Book Management System",
+    "description": "This collection demonstrates THREE structural design patterns working together in a Spring Boot Book Management System.\n\n## Design Patterns Implemented:\n\n### 1. ADAPTER PATTERN (BookMapper.java)\n**Purpose**: Converts between incompatible interfaces\n- Adapts `Book` entity \u2194 `BookDto` for API layer\n- Adapts `BookComponent` (decorator) \u2194 `BookDto`\n- **Used in**: ALL endpoints (via BookMapper.toDTO() calls)\n- **Location**: `org.example.structural.utils.BookMapper`\n\n### 2. FACADE PATTERN (LibraryFacade.java)\n**Purpose**: Provides simplified interface to complex subsystems\n- Hides complexity of BookService, decorators, and repository interactions\n- Single point of entry for all library operations\n- **Used in**: ALL endpoints (controller \u2192 facade \u2192 service)\n- **Location**: `org.example.structural.service.LibraryFacade`\n\n### 3. DECORATOR PATTERN (decorator/ package)\n**Purpose**: Dynamically adds features to objects without modifying their class\n- `FeaturedBookDecorator`: Adds [Featured] tag, applies 5% discount\n- `BestsellerBookDecorator`: Adds [Bestseller] tag, applies 10% premium\n- Supports decorator stacking (combine multiple decorators)\n- **Used in**: /featured, /bestsellers, /{id}/featured, /{id}/bestseller, /{id}/featured-bestseller\n- **Location**: `org.example.structural.service.decorator/`\n\n## Pattern Collaboration:\nMost endpoints use **MULTIPLE PATTERNS TOGETHER**:\n- Basic operations: Facade + Adapter\n- Decorator operations: Facade + Decorator + Adapter\n\n## Base URL\nhttp://localhost:8080\n\n## Database Access\n- H2 Console: http://localhost:8080/h2-console\n- Swagger UI: http://localhost:8080/swagger-ui/index.html\n- JDBC URL: jdbc:h2:mem:librarydb\n- Username: sa\n- Password: password\n\n## Patterns NOT Implemented:\nThe README mentions Bridge, Composite, Flyweight, and Proxy patterns as educational examples, but these are NOT implemented in the actual codebase.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Book CRUD Operations (Facade + Adapter Patterns)",
+      "item": [
+        {
+          "name": "Get All Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Retrieves all books from the library.\n\n**PATTERNS USED:**\n- **FACADE**: LibraryFacade.getAllBooks() simplifies access to BookService\n- **ADAPTER**: BookMapper.toDTO() converts Book entities to BookDto for API response\n\n**Code Flow**: Controller \u2192 LibraryFacade.getAllBooks() \u2192 BookService.getAllBooks() \u2192 Repository \u2192 Book entities \u2192 BookMapper.toDTO() \u2192 List<BookDto>"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Book by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Book has required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('title');",
+                  "    pm.expect(jsonData).to.have.property('author');",
+                  "    pm.expect(jsonData).to.have.property('price');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "1"
+              ]
+            },
+            "description": "Retrieves a specific book by its ID. Returns 404 if book not found."
+          },
+          "response": []
+        },
+        {
+          "name": "Add New Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Book was created with ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.environment.set(\"created_book_id\", jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Code\",\n  \"author\": \"Robert C. Martin\",\n  \"price\": 42.99,\n  \"description\": \"A Handbook of Agile Software Craftsmanship\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/books",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Adds a new book to the library.\n\n**PATTERNS USED:**\n- **ADAPTER**: BookMapper.toEntity() converts BookDto (from request) \u2192 Book entity\n- **FACADE**: LibraryFacade.addBook() handles persistence logic\n- **ADAPTER**: BookMapper.toDTO() converts saved Book \u2192 BookDto (response)\n\n**Code Flow**: BookDto (JSON) \u2192 BookMapper.toEntity() \u2192 Book entity \u2192 LibraryFacade.addBook() \u2192 BookService.save() \u2192 Repository \u2192 Saved Book \u2192 BookMapper.toDTO() \u2192 BookDto (JSON response)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Book was updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.price).to.eql(39.99);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Code\",\n  \"author\": \"Robert C. Martin\",\n  \"price\": 39.99,\n  \"description\": \"A Handbook of Agile Software Craftsmanship - Updated Edition\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/books/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "1"
+              ]
+            },
+            "description": "Updates an existing book. Returns 404 if book not found."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "1"
+              ]
+            },
+            "description": "Deletes a book from the library. Returns 404 if book not found."
+          },
+          "response": []
+        }
+      ],
+      "description": "Basic CRUD operations demonstrating TWO patterns working together:\n\n1. **FACADE PATTERN**: LibraryFacade provides simplified interface hiding BookService complexity\n2. **ADAPTER PATTERN**: BookMapper converts between Book entities and BookDto objects\n\n**Flow**: Controller \u2192 LibraryFacade \u2192 BookService \u2192 Repository\n**Conversion**: Book entity \u2192 BookMapper.toDTO() \u2192 BookDto (returned to client)"
+    },
+    {
+      "name": "Search Operations (Facade + Adapter Patterns)",
+      "item": [
+        {
+          "name": "Search Books by Title",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Results contain search term\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0].title.toLowerCase()).to.include('code');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/search/title?title=Code",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "search",
+                "title"
+              ],
+              "query": [
+                {
+                  "key": "title",
+                  "value": "Code"
+                }
+              ]
+            },
+            "description": "Searches for books by title (case-insensitive, partial match).\n\n**PATTERNS USED:**\n- **FACADE**: LibraryFacade.searchByTitle() hides repository query complexity\n- **ADAPTER**: BookMapper.toDTO() converts search results to DTOs\n\n**Code Flow**: Controller \u2192 LibraryFacade.searchByTitle(title) \u2192 BookService.searchByTitle() \u2192 Repository.findByTitleContainingIgnoreCase() \u2192 List<Book> \u2192 BookMapper.toDTO() \u2192 List<BookDto>"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Books by Author",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Results are books by the author\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/search/author?author=Martin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "search",
+                "author"
+              ],
+              "query": [
+                {
+                  "key": "author",
+                  "value": "Martin"
+                }
+              ]
+            },
+            "description": "Searches for books by author name (case-insensitive, partial match).\n\n**PATTERNS USED:**\n- **FACADE**: LibraryFacade.searchByAuthor() simplifies search logic\n- **ADAPTER**: BookMapper.toDTO() converts search results to DTOs\n\n**Code Flow**: Controller \u2192 LibraryFacade.searchByAuthor(author) \u2192 BookService.searchByAuthor() \u2192 Repository.findByAuthorContainingIgnoreCase() \u2192 List<Book> \u2192 BookMapper.toDTO() \u2192 List<BookDto>"
+          },
+          "response": []
+        }
+      ],
+      "description": "Search operations demonstrating TWO patterns:\n\n1. **FACADE PATTERN**: Simplifies complex search queries (title/author searches)\n2. **ADAPTER PATTERN**: Converts search results from Book entities to BookDto\n\nThe facade hides the repository query complexity and provides clean, intuitive search methods."
+    },
+    {
+      "name": "Decorator Pattern Examples",
+      "item": [
+        {
+          "name": "Get All Featured Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains featured books\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/featured",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "featured"
+              ]
+            },
+            "description": "Retrieves all books with FeaturedBookDecorator applied to each.\n\n**PATTERNS USED:**\n- **FACADE**: LibraryFacade.getFeaturedBooks() applies decorator to entire collection\n- **DECORATOR**: Each book wrapped in FeaturedBookDecorator ([Featured] tag + 5% discount)\n- **ADAPTER**: BookMapper.toDTO() converts each decorated BookComponent \u2192 BookDto\n\n**Code Flow**: Controller \u2192 LibraryFacade.getFeaturedBooks() \u2192 Gets all books \u2192 Wraps each in FeaturedBookDecorator \u2192 Stream of BookComponents \u2192 Map to DTOs \u2192 List<BookDto>\n\nEvery book in the response will have the [Featured] tag and discounted price."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Bestseller Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains bestseller books\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/bestsellers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bestsellers"
+              ]
+            },
+            "description": "Retrieves all books with BestsellerBookDecorator applied to each.\n\n**PATTERNS USED:**\n- **FACADE**: LibraryFacade.getBestsellers() applies decorator to entire collection\n- **DECORATOR**: Each book wrapped in BestsellerBookDecorator ([Bestseller] tag + 10% premium)\n- **ADAPTER**: BookMapper.toDTO() converts each decorated BookComponent \u2192 BookDto\n\n**Code Flow**: Controller \u2192 LibraryFacade.getBestsellers() \u2192 Gets all books \u2192 Wraps each in BestsellerBookDecorator \u2192 Stream of BookComponents \u2192 Map to DTOs \u2192 List<BookDto>\n\nEvery book in the response will have the [Bestseller] tag and premium pricing."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Featured Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Book description includes Featured\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.description).to.include('[Featured]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/1/featured",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "1",
+                "featured"
+              ]
+            },
+            "description": "Gets a single book with the FeaturedBookDecorator applied.\n\n**PATTERNS USED (ALL THREE!):**\n- **FACADE**: LibraryFacade.getFeaturedBook() encapsulates decorator creation\n- **DECORATOR**: FeaturedBookDecorator wraps BasicBook, adds [Featured] tag + 5% discount\n- **ADAPTER**: BookMapper.toDTO(BookComponent) converts decorated book \u2192 BookDto\n\n**Code Flow**: Controller \u2192 LibraryFacade.getFeaturedBook(id) \u2192 Creates BasicBook(book) \u2192 Wraps with FeaturedBookDecorator \u2192 BookComponent \u2192 BookMapper.toDTO(component) \u2192 BookDto with modified description and price\n\n**Decorator Behavior**: Adds '[Featured]' prefix to description, applies 5% price discount"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Bestseller Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Book description includes Bestseller\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.description).to.include('[Bestseller]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/1/bestseller",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "1",
+                "bestseller"
+              ]
+            },
+            "description": "Gets a single book with the BestsellerBookDecorator applied.\n\n**PATTERNS USED (ALL THREE!):**\n- **FACADE**: LibraryFacade.getBestsellerBook() encapsulates decorator creation\n- **DECORATOR**: BestsellerBookDecorator wraps BasicBook, adds [Bestseller] tag + 10% premium\n- **ADAPTER**: BookMapper.toDTO(BookComponent) converts decorated book \u2192 BookDto\n\n**Code Flow**: Controller \u2192 LibraryFacade.getBestsellerBook(id) \u2192 Creates BasicBook(book) \u2192 Wraps with BestsellerBookDecorator \u2192 BookComponent \u2192 BookMapper.toDTO(component) \u2192 BookDto\n\n**Decorator Behavior**: Adds '[Bestseller]' prefix to description, applies 10% price premium"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Featured Bestseller Book (Stacked Decorators)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Book has both decorators applied\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.description).to.include('[Featured]');",
+                  "    pm.expect(jsonData.description).to.include('[Bestseller]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/books/1/featured-bestseller",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "1",
+                "featured-bestseller"
+              ]
+            },
+            "description": "Gets a book with BOTH decorators stacked together - the ultimate demonstration!\n\n**PATTERNS USED (ALL THREE!):**\n- **FACADE**: LibraryFacade.getFeaturedBestseller() manages complex decorator stacking\n- **DECORATOR (STACKED!)**: Multiple decorators wrapped together\n- **ADAPTER**: BookMapper.toDTO(BookComponent) handles the complex decorated object\n\n**Code Flow**: \nController \u2192 LibraryFacade.getFeaturedBestseller(id) \u2192 Creates BasicBook(book) \u2192 Wraps with BestsellerBookDecorator \u2192 Wraps AGAIN with FeaturedBookDecorator \u2192 BookComponent \u2192 BookMapper.toDTO(component) \u2192 BookDto\n\n**Stacked Decorator Behavior**:\n1. BestsellerBookDecorator: Adds '[Bestseller]' + 10% premium\n2. FeaturedBookDecorator: Adds '[Featured]' + 5% discount (applied to already-modified price)\n\n**Result**: Description shows BOTH tags, price has BOTH modifications applied (premium then discount)\n\nThis showcases the true power of the Decorator pattern - unlimited stacking of behaviors at runtime!"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints demonstrating ALL THREE patterns working together:\n\n1. **DECORATOR PATTERN**: Dynamically adds features to books\n   - FeaturedBookDecorator: adds [Featured] tag + 5% discount\n   - BestsellerBookDecorator: adds [Bestseller] tag + 10% premium\n   - Can stack decorators (featured-bestseller endpoint)\n\n2. **FACADE PATTERN**: LibraryFacade wraps decorator creation logic\n\n3. **ADAPTER PATTERN**: BookMapper.toDTO(BookComponent) converts decorated books to DTOs\n\n**Flow**: Controller \u2192 LibraryFacade \u2192 Creates BasicBook \u2192 Wraps with Decorator(s) \u2192 BookMapper converts BookComponent \u2192 BookDto \u2192 Client\n\nThis showcases how multiple structural patterns complement each other in a real application!"
+    },
+    {
+      "name": "Sample Data Setup",
+      "item": [
+        {
+          "name": "Add Sample Book 1 - Design Patterns",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Design Patterns: Elements of Reusable Object-Oriented Software\",\n  \"author\": \"Gang of Four\",\n  \"price\": 54.99,\n  \"description\": \"The classic book on design patterns\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/books",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Creates a sample book for testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Sample Book 2 - Clean Architecture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Clean Architecture\",\n  \"author\": \"Robert C. Martin\",\n  \"price\": 38.99,\n  \"description\": \"A Craftsman's Guide to Software Structure and Design\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/books",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Creates another sample book for testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Sample Book 3 - Refactoring",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Refactoring: Improving the Design of Existing Code\",\n  \"author\": \"Martin Fowler\",\n  \"price\": 49.99,\n  \"description\": \"Essential techniques for improving code quality\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/books",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Creates a third sample book for testing"
+          },
+          "response": []
+        }
+      ],
+      "description": "Helper requests to add sample data for testing the API"
+    },
+    {
+      "name": "Order Operations (Orders + Library Integration)",
+      "description": "Order endpoints integrated with Library books. Orders now reference a Book ID and compute totals from the book price.",
+      "item": [
+        {
+          "name": "Create Order (Book Purchase)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Jane Doe\",\n  \"bookId\": 1,\n  \"quantity\": 2,\n  \"paymentMethod\": \"CREDIT_CARD\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Creates an order for a book from the library. Total is computed from book price x quantity."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "1"
+              ]
+            },
+            "description": "Retrieves a single order by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Retrieves all orders."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "1"
+              ]
+            },
+            "description": "Cancels an order by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Undo Last Order Action",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/undo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "undo"
+              ]
+            },
+            "description": "Undoes the last order command."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "created_book_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
