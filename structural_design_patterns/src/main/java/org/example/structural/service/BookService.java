@@ -4,6 +4,7 @@ import org.example.structural.entity.Book;
 import org.example.structural.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,7 @@ public class BookService {
         return bookRepository.save(book);
     }
 
+    @Transactional
     public Optional<Book> updateBook(Long id, Book updatedBook) {
         return bookRepository.findById(id)
                 .map(existingBook -> {
