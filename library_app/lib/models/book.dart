@@ -9,12 +9,14 @@ class Book {
   final String title;
   final String author;
   final double price;
+  final String? description;
 
   Book({
     this.id,
     required this.title,
     required this.author,
     required this.price,
+    this.description,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) => _$BookFromJson(json);

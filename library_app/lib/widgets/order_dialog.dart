@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
 import '../models/book.dart';
 import '../models/order_request.dart';
 import 'package:provider/provider.dart';
 import '../providers/order_provider.dart';
+import '../providers/user_profile.dart';
 
 void showOrderDialog(BuildContext context, Book book) {
   showDialog(
@@ -23,20 +25,42 @@ class OrderDialog extends StatefulWidget {
 
 class _OrderDialogState extends State<OrderDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
   String _paymentMethod = 'CREDIT_CARD';
 
   @override
   void dispose() {
-    _nameController.dispose();
     _quantityController.dispose();
     super.dispose();
   }
 
+  String? _getUserNameFromIdToken(String? idToken) {
+    if (idToken == null) return null;
+    try {
+      final parts = idToken.split('.');
+      if (parts.length != 3) return null;
+      final payload = json.decode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      return payload['name'] ??
+             payload['preferred_username'] ??
+             payload['given_name'] ??
+             payload['email']?.split('@')[0];
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _submitOrder() async {
     if (_formKey.currentState!.validate()) {
-      final name = _nameController.text;
+      final userProfile = context.read<UserProfile>();
+
+      // Get customer name from user profile
+      final name = userProfile.name ??
+                   _getUserNameFromIdToken(userProfile.idToken) ??
+                   userProfile.email ??
+                   'Customer';
+
       final quantity = int.parse(_quantityController.text);
 
       final request = OrderRequest(
@@ -82,6 +106,12 @@ class _OrderDialogState extends State<OrderDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final userProfile = Provider.of<UserProfile>(context);
+    final customerName = userProfile.name ??
+                         _getUserNameFromIdToken(userProfile.idToken) ??
+                         userProfile.email ??
+                         'Customer';
+
     return AlertDialog(
       title: Text('Order "${widget.book.title}"'),
       content: SingleChildScrollView(
@@ -90,12 +120,26 @@ class _OrderDialogState extends State<OrderDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Customer Name'),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter your name'
-                    : null,
+              // Display customer name (read-only)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.person, size: 20, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      customerName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(

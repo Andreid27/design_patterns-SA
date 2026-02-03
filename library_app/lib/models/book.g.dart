@@ -11,6 +11,7 @@ Book _$BookFromJson(Map<String, dynamic> json) => Book(
       title: json['title'] as String,
       author: json['author'] as String,
       price: (json['price'] as num).toDouble(),
+      description: json['description'] as String?,
     );
 
 Map<String, dynamic> _$BookToJson(Book instance) => <String, dynamic>{
@@ -18,4 +19,5 @@ Map<String, dynamic> _$BookToJson(Book instance) => <String, dynamic>{
       'title': instance.title,
       'author': instance.author,
       'price': instance.price,
+      'description': instance.description,
     };

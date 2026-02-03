@@ -1,8 +1,5 @@
 class AppConstants {
-  // Base URL for Android Emulator to access localhost
-  static const String BASE_URL = "http://10.0.2.2:8080/api";
-
-  // Endpoints
+  // Endpoints (base URL is now configured in .env file)
   static const String BOOKS_ENDPOINT = "/books";
   static const String ORDERS_ENDPOINT = "/orders";
 
