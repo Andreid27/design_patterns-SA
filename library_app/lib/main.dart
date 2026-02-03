@@ -15,6 +15,8 @@ import 'screens/orders_screen.dart';
 import 'screens/book_detail_screen.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/agent_chat_screen.dart';
+import 'services/api_service.dart';
 
 Map<String, dynamic>? parseIdToken(String idToken) {
   try {
@@ -90,6 +92,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider(create: (_) => ApiService()),
         ChangeNotifierProvider.value(value: userProfile),
         ChangeNotifierProvider(create: (_) => BookProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
@@ -141,6 +144,10 @@ class LibraryApp extends StatelessWidget {
         GoRoute(
           path: '/admin',
           builder: (context, state) => const AdminScreen(),
+        ),
+        GoRoute(
+          path: '/agent',
+          builder: (context, state) => const AgentChatScreen(),
         ),
       ],
     );

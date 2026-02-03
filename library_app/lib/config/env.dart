@@ -9,4 +9,7 @@ class Environment {
   static String get keycloakClientId => dotenv.get('KEYCLOAK_CLIENT_ID');
   static String get keycloakRedirectUri => dotenv.get('KEYCLOAK_REDIRECT_URI');
   static String get keycloakDiscoveryUrl => dotenv.get('KEYCLOAK_DISCOVERY_URL');
+  
+  // OpenAI Configuration
+  static String get openAiApiKey => dotenv.get('OPENAI_API_KEY', fallback: '');
 }

@@ -4,6 +4,7 @@ import '../providers/user_profile.dart';
 import 'library_screen.dart';
 import 'orders_screen.dart';
 import 'admin_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -60,6 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         destinations: destinations,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => GoRouter.of(context).push('/agent'),
+        child: const Icon(Icons.assistant),
       ),
     );
   }
